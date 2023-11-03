@@ -16,10 +16,19 @@ public class SlidingWindowStrategy implements AlertStrategy{
                                        AlertConfig alertConfig) {
         List<Event> events = eventBuffer.get(client).get(eventType);
         long currentTime = System.currentTimeMillis();
-        long windowStartTime = currentTime - alertConfig.getWindowSizeInSecs() * 1000L;
 
-        events.removeIf(event -> event.getTimestamp() < windowStartTime);
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 1);
 
-        return events.size() >= alertConfig.getCount();
+        long windowStartTime = (currentTime - calendar.getTimeInMillis()) % (alertConfig.getWindowSizeInSecs() * 1000L);
+        if(windowStartTime == 0) {
+            events.removeIf(event -> event.getTimestamp() < (currentTime - (alertConfig.getWindowSizeInSecs()*1000L + 1L)));
+            return events.size() >= alertConfig.getCount();
+        }
+
+        return false;
     }
 }
