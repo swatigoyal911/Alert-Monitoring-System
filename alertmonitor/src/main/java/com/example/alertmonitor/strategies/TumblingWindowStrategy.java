@@ -16,13 +16,21 @@ public class TumblingWindowStrategy implements AlertStrategy{
                                        AlertConfig alertConfig) {
         List<Event> events = eventBuffer.get(client).get(eventType);
         long currentTime = System.currentTimeMillis();
-        long windowStartTime = currentTime - alertConfig.getWindowSizeInSecs() * 1000L;
 
-        events.removeIf(event -> event.getTimestamp() < windowStartTime);
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 1);
 
-        if (events.size() >= alertConfig.getCount()) {
-            eventBuffer.get(client).get(eventType).clear();
-            return true;
+        long windowStartTime = (currentTime - calendar.getTimeInMillis()) % (alertConfig.getWindowSizeInSecs() * 1000L);
+        if(windowStartTime == 0) {
+            events.removeIf(event -> event.getTimestamp() < (currentTime - (alertConfig.getWindowSizeInSecs()*1000L + 1L)));
+
+            if (events.size() >= alertConfig.getCount()) {
+                eventBuffer.get(client).get(eventType).clear();
+                return true;
+            }
         }
 
         return false;
