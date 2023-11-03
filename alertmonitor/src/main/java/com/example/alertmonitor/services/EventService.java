@@ -35,7 +35,7 @@ public class EventService {
         AlertConfig alertConfig = dataProcessor.getAlertConfig(client, eventType);
         if (alertConfig != null) {
             eventBuffer.computeIfAbsent(client, k -> new ConcurrentHashMap<>())
-                    .computeIfAbsent(eventType, k -> new ArrayList<>())
+                    .computeIfAbsent(eventType, k -> new CopyOnWriteArrayList<>())
                     .add(getEvent(client, eventType)
             );
             checkAlert(client, eventType);
